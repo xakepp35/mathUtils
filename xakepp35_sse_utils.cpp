@@ -1,5 +1,5 @@
-#include "phy_utils.h"
-
+#include "xakepp35_sse_utils.h"
+#include "fasttrigo.h"
 #include <immintrin.h>
 
 static const float pi = 3.1415926535897932384626433832795f;
@@ -29,10 +29,12 @@ __m128 _mm_fmodsgn_ps(__m128 x, __m128 r) {
 	);
 }
 
+
 // 2mul, 1sub
 __m128 _mm_cross_ps(__m128 a0, __m128 a1, __m128 b0, __m128 b1) {
 	return _mm_sub_ps(_mm_mul_ps(a0, b1), _mm_mul_ps(a1, b0));
 }
+
 
 // 2mul, 1add
 __m128 _mm_dot_ps(__m128 a0, __m128 a1, __m128 b0, __m128 b1) {
@@ -53,9 +55,11 @@ __m128 pu_check_normalize_angle(__m128 srcAngle) {
 		_mm_andnot_ps(negMask, clampedPos));
 }
 
+
 __m128 pu_fmod_normalize_angle(__m128 srcAngle) {
 	return _mm_fmodsgn_ps(srcAngle, mm_2pi_ps);
 }
+
 
 // neural network proximity sensor input: 3det, 3div, 1add, 7set, 4cmp
 __m128 pu_ray_segment_distance_inverse(__m128 s0qp0, __m128 s0qp1, __m128 s0s10, __m128 s0s11, __m128 d0, __m128 d1) {
@@ -72,7 +76,8 @@ __m128 pu_ray_segment_distance_inverse(__m128 s0qp0, __m128 s0qp1, __m128 s0s10,
 		_mm_andnot_ps(mask, mm_0_ps)); // 0: parallel, not intersecting, infinitely far
 }
 
-// collision detector:  3dot, 2mul, 1div, 2sub, 4set, 3comiss
+
+// collision detector:  3dot, 2mul, 1div, 2sub, 4set, 3cmp
 __m128 pu_circle_segment_collides(__m128 s0qp0, __m128 s0qp1, __m128 s0s10, __m128 s0s11, __m128 rSqr) {
 	auto a = _mm_dot_ps(s0s10, s0s11, s0s10, s0s11); //dot(s0s1, s0s1);
 	//auto amask = _mm_cmpneq_ps( a, _mm_0_ps ); //if( a != 0 ) // if you haven't zero-length segments omit this
@@ -87,6 +92,7 @@ __m128 pu_circle_segment_collides(__m128 s0qp0, __m128 s0qp1, __m128 s0s10, __m1
 	return _mm_and_ps(tmask, dmask);
 }
 
+
 __m128 _mm_tanh_ps(__m128 x) {
 	auto posMask = _mm_cmpge_ps(x, mm_3_ps);
 	auto negMask = _mm_cmple_ps(x, mm_m3_ps);
@@ -98,4 +104,12 @@ __m128 _mm_tanh_ps(__m128 x) {
 	return _mm_or_ps(
 		_mm_and_ps(outrangeMask, outrangeResult),
 		_mm_andnot_ps(outrangeMask, padeEstimate));
+}
+
+
+__m128 pu_circular_2d_path_advancement(__m128 prevPosX, __m128 prevPosY, __m128 currPosX, __m128 currPosY) {
+	return FTA::atan2_ps(
+		_mm_cross_ps(prevPosX, prevPosY, currPosX, currPosY),
+		_mm_dot_ps(prevPosX, prevPosY, currPosX, currPosY)
+	);
 }
