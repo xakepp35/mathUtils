@@ -14,6 +14,6 @@ __m128 pu_fmod_normalize_angle(__m128 srcAngle);
 __m128 pu_ray_segment_distance_inverse(__m128 s0qp0, __m128 s0qp1, __m128 s0s10, __m128 s0s11, __m128 d0, __m128 d1);
 __m128 pu_circle_segment_collides(__m128 s0qp0, __m128 s0qp1, __m128 s0s10, __m128 s0s11, __m128 rSqr);
 
-__m128 _mm_tanh_ps(__m128 x);
+__m128 mm_tanh_ps(__m128 x);
 
 __m128 pu_circular_2d_path_advancement(__m128 prevPosX, __m128 prevPosY, __m128 currPosX, __m128 currPosY);

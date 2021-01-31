@@ -429,7 +429,9 @@ __m128 FTA::atan_ps(__m128 x)
 }
 __m128 FTA::atan2_ps(__m128 y, __m128 x)
 {
-	__m128 absxgreaterthanabsy = _mm_cmpgt_ps(_mm_andnot_ps(SIGNMASK, x), _mm_andnot_ps(SIGNMASK, y));
+	auto absx = _mm_andnot_ps(SIGNMASK, x);
+	auto absy = _mm_andnot_ps(SIGNMASK, y);
+	__m128 absxgreaterthanabsy = _mm_cmpgt_ps(absx, absy);
 	__m128 ratio = _mm_div_ps(_mm_add_ps(_mm_and_ps(absxgreaterthanabsy, y), _mm_andnot_ps(absxgreaterthanabsy, x)),
 		_mm_add_ps(_mm_and_ps(absxgreaterthanabsy, x), _mm_andnot_ps(absxgreaterthanabsy, y)));
 	__m128 atan = FTA::atan_ps(ratio);
@@ -444,7 +446,16 @@ __m128 FTA::atan2_ps(__m128 y, __m128 x)
 	shift = _mm_xor_ps(shift, _mm_andnot_ps(ygreaterthan0, SIGNMASK)); //negate shift if y<=0
 	shift = _mm_andnot_ps(_mm_and_ps(absxgreaterthanabsy, xgreaterthan0), shift); //null if abs>absy & x>0
 
-	return _mm_add_ps(atan, shift);
+	auto xzero = _mm_cmpeq_ps(x, _mm_set1_ps(0.f));
+	auto yzero = _mm_cmpeq_ps(y, _mm_set1_ps(0.f));
+	auto bothzero = _mm_and_ps(xzero, yzero);
+	auto shiftedatan = _mm_add_ps(atan, shift);
+	auto realatan = _mm_andnot_ps(bothzero, shiftedatan);
+	auto nanatan = _mm_and_ps(bothzero, _mm_set_ps1(0.0f));
+	return _mm_or_ps(
+		realatan,
+		nanatan
+	);
 }
 
 __m128 FTA::cos_52s_ps(__m128 x)

@@ -85,7 +85,7 @@ static inline __m128i xorshift128plus_vector_advance(__m128i* s0, __m128i* s1) {
 }
 
 
-
+/*
 __m128 random_bits_to_uniform_1_2(__m128i random_bits) {
 	const __m128i SP_MASK = _mm_set1_epi32(0x3F800000);
 	return _mm_cvtepi32_ps(_mm_or_si128(_mm_srli_epi32(random_bits, 9), SP_MASK));
@@ -93,12 +93,29 @@ __m128 random_bits_to_uniform_1_2(__m128i random_bits) {
 
 
 __m128 random_bits_to_uniform_0_1(__m128i random_bits) {
-	return _mm_add_ps(_mm_set_ps1(-1.0f), random_bits_to_uniform_1_2(random_bits));
+	auto uniRandom12(random_bits_to_uniform_1_2(random_bits));
+	return _mm_add_ps(_mm_set_ps1(-1.0f), uniRandom12);
+}*/
+
+//converts __m256i values into __m256 values, that contains floats in [0,1] range.
+//https://stackoverflow.com/a/54893167/9007125
+inline __m128 random_bits_to_uniform_0_1(__m128i randomBits) { //<-- stores here.
+	const static auto s = _mm_set_ps1(0x1.0p-24f); // or (1.0f / (uint32_t(1) << 24));
+
+	// remember that '_mm256_cvtepi32_ps' will convert 32-bit ints into a 32-bit floats
+	auto converted = _mm_cvtepi32_ps(_mm_srli_epi32(randomBits, 8));
+	auto scaled = _mm_mul_ps(converted, s);
+	return scaled;
 }
 
+inline __m128 random_bits_to_uniform_1_2(__m128i randomBits) {
+	auto uniRandom01(random_bits_to_uniform_0_1(randomBits));
+	return _mm_add_ps(_mm_set_ps1(1.0f), uniRandom01);
+}
 
 __m128 random_bits_to_uniform_k_b(__m128i random_bits, __m128 k, __m128 b) {
-	return _mm_add_ps(_mm_mul_ps(random_bits_to_uniform_0_1(random_bits), k), b);
+	auto uniRandom01(random_bits_to_uniform_0_1(random_bits));
+	return _mm_add_ps(_mm_mul_ps(uniRandom01, k), b);
 }
 
 

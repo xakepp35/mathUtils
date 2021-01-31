@@ -93,7 +93,7 @@ __m128 pu_circle_segment_collides(__m128 s0qp0, __m128 s0qp1, __m128 s0s10, __m1
 }
 
 
-__m128 _mm_tanh_ps(__m128 x) {
+__m128 mm_tanh_ps(__m128 x) {
 	auto posMask = _mm_cmpge_ps(x, mm_3_ps);
 	auto negMask = _mm_cmple_ps(x, mm_m3_ps);
 	auto outrangeResult = _mm_or_ps( _mm_and_ps(posMask, mm_1_ps), _mm_and_ps(negMask, mm_m1_ps));
